@@ -1,0 +1,483 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Authenticated Wallet and Transactions API",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/register": {
+        "post": {
+          "summary": "Register a new user",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phone": {
+                        "type": "string",
+                        "format": "numeric",
+                        "example": "1234567890",
+                        "description": "The user's unique phone number."
+                      },
+                      "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "SecurePass123",
+                        "description": "The user's password. Should be at least 8 characters long."
+                      }
+                  },
+                  "required": ["phone", "password"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "User registered successfully",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "user": {
+                      "id": 1,
+                      "phone": "1234567890"
+                    }
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation error",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "The given data was invalid."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/token": {
+        "post": {
+          "summary": "Get access token for a user",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "phone": {
+                      "type": "string",
+                      "description": "User's phone number"
+                    },
+                    "password": {
+                      "type": "string",
+                      "description": "User's password"
+                    }
+                  },
+                  "required": ["phone", "password"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Access token generated successfully",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "token": "eyJ... (access token)"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "Unauthorized"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user/generate-wallet": {
+        "post": {
+          "summary": "Generate a new wallet",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "description": "email address"
+                    },
+                    "coin_name": {
+                      "type": "string",
+                      "description": "Coin name"
+                    }
+                  },
+                  "required": ["email", "coin_name"]
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Wallet successfully created",
+                "content": {
+                  "application/json": {
+                    "example": {
+                      "message": "BTC wallet successfully created with $100.00 bonus"
+                    }
+                  }
+                }
+              },
+              "400": {
+                "description": "Validation error or wallet already exists",
+                "content": {
+                  "application/json": {
+                    "example": {
+                      "message": "Cannot generate two BTC wallets"
+                    }
+                  }
+                }
+              },
+              "500": {
+                "description": "Server error",
+                "content": {
+                  "application/json": {
+                    "example": {
+                      "message": "Server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user/balance": {
+        "get": {
+          "summary": "Get a specific user's wallet balance with live market rate",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "coin_name",
+              "in": "query",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Coin name"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Wallet balance retrieved successfully",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "data": {
+                      "wallet": "BTC",
+                      "balance": 123.45
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Validation error or insufficient funds",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "Insufficient funds"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "Server error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user/wallets": {
+        "get": {
+          "summary": "Get all user's wallet balance with live market rate",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "All wallet balances retrieved successfully",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "data": [
+                      {
+                        "wallet": "BTC",
+                        "balance_usd": 1.234,
+                        "converted_balance": 567.89
+                      },
+                      {
+                        "wallet": "ETH",
+                        "balance_usd": 10.0,
+                        "converted_balance": 1234.56
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Validation error or no wallets found",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "No wallets found"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "Server error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user/transfer": {
+        "post": {
+          "summary": "Transfer funds between wallets",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "receivers_email": {
+                      "type": "string",
+                      "description": "Receiver's email address"
+                    },
+                    "sending_coin": {
+                      "type": "string",
+                      "description": "Sending coin name"
+                    },
+                    "coin_name": {
+                      "type": "string",
+                      "description": "Coin name"
+                    },
+                    "amount": {
+                      "type": "string",
+                      "description": "Amount to transfer"
+                    }
+                  },
+                  "required": ["receivers_email", "sending_coin", "coin_name", "amount"]
+                }
+              }
+            },
+            "responses": {
+              "200": {
+                "description": "Funds transferred successfully",
+                "content": {
+                  "application/json": {
+                    "example": {
+                      "message": "$100.00 successfully sent to user@gmail.com"
+                    }
+                  }
+                }
+              },
+              "400": {
+                "description": "Validation error or insufficient funds",
+                "content": {
+                  "application/json": {
+                    "example": {
+                      "message": "Insufficient funds"
+                    }
+                  }
+                }
+              },
+              "401": {
+                "description": "Invalid email address or cannot send funds to the specified wallet",
+                "content": {
+                  "application/json": {
+                    "example": {
+                      "message": "Invalid email address"
+                    }
+                  }
+                }
+              },
+              "500": {
+                "description": "Server error",
+                "content": {
+                  "application/json": {
+                    "example": {
+                      "message": "Server error"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user/all-transactions": {
+        "get": {
+          "summary": "Get all user's wallet transactions",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "All transactions retrieved successfully",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "data": [
+                      {
+                        "id": 1,
+                        "senders_email": "sender@gmail.com",
+                        "receiver_email": "receiver@gmail.com",
+                        "coin_name": "BTC",
+                        "amount": "10.00"
+                      },
+                      {
+                        "id": 2,
+                        "senders_email": "sender@gmail.com",
+                        "receiver_email": "receiver@gmail.com",
+                        "coin_name": "ETH",
+                        "amount": "5.00"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "Server error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/user/transaction": {
+        "get": {
+          "summary": "Get user transactions for a specific wallet",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "name": "coin_name",
+              "in": "query",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "Specific coin name"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Transactions for the specific coin retrieved successfully",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "data": [
+                      {
+                        "id": 1,
+                        "senders_email": "sender@gmail.com",
+                        "receiver_email": "receiver@gmail.com",
+                        "coin_name": "BTC",
+                        "amount": "10.00"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "No transactions found for the specific coin",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "No transaction found"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Server error",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "message": "Server error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      }
+    }
+  }
+  
